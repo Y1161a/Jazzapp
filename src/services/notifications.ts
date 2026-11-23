@@ -43,30 +43,34 @@ class NotificationService {
         osc.stop(time + duration);
       });
     } catch (e) {
-      console.warn('Audio play failed', e);
+      console.warn('Audio play failed (waiting for user interaction):', e);
     }
   }
 
   // Request browser notification permission
   async requestPermission(): Promise<boolean> {
-    if (!('Notification' in window)) {
-      return false;
-    }
+    try {
+      if (!('Notification' in window) || typeof Notification === 'undefined') {
+        return false;
+      }
 
-    if (Notification.permission === 'granted') {
-      return true;
-    }
+      if (Notification.permission === 'granted') {
+        return true;
+      }
 
-    if (Notification.permission !== 'denied') {
-      const permission = await Notification.requestPermission();
-      return permission === 'granted';
+      if (Notification.permission !== 'denied' && typeof Notification.requestPermission === 'function') {
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
+      }
+    } catch (e) {
+      console.warn('Notification permission error:', e);
     }
 
     return false;
   }
 
   isPermissionGranted(): boolean {
-    return 'Notification' in window && Notification.permission === 'granted';
+    return typeof Notification !== 'undefined' && 'Notification' in window && Notification.permission === 'granted';
   }
 
   // Send immediate notification
@@ -75,23 +79,27 @@ class NotificationService {
 
     const iconUrl = `${import.meta.env.BASE_URL}icons/coffee-icon.svg`;
 
-    if ('Notification' in window && Notification.permission === 'granted') {
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'SCHEDULE_NOTIFICATION',
-          title,
-          body,
-          tag: tag || 'jazzapp-alert',
-          icon: iconUrl
-        });
-      } else {
-        new Notification(title, {
-          body,
-          icon: iconUrl,
-          badge: iconUrl,
-          tag: tag || 'jazzapp-alert',
-        });
+    try {
+      if (typeof Notification !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'SCHEDULE_NOTIFICATION',
+            title,
+            body,
+            tag: tag || 'jazzapp-alert',
+            icon: iconUrl
+          });
+        } else if (typeof Notification === 'function') {
+          new Notification(title, {
+            body,
+            icon: iconUrl,
+            badge: iconUrl,
+            tag: tag || 'jazzapp-alert',
+          });
+        }
       }
+    } catch (e) {
+      console.warn('Failed to send notification:', e);
     }
   }
 
