@@ -8,33 +8,44 @@ export default {
   theme: {
     extend: {
       colors: {
-        cafe: {
-          50: '#fbf8f5',
-          100: '#f5eee6',
-          200: '#ebd9c8',
-          300: '#debfa3',
-          400: '#cd9f78',
-          500: '#b87d51',
-          600: '#9f643f',
-          700: '#7f4c33',
-          800: '#643c2d',
-          900: '#4e2f25',
-          950: '#2a1711',
+        charcoal: {
+          DEFAULT: '#171e19',
+          50: '#f4f5f4',
+          100: '#e5e7e5',
+          200: '#ccd1cc',
+          300: '#a6b0a6',
+          400: '#7a897b',
+          500: '#5c6c5d',
+          600: '#485549',
+          700: '#3a443b',
+          800: '#303931',
+          900: '#2a312b',
+          950: '#171e19',
         },
-        jazz: {
-          gold: '#d4af37',
-          brass: '#c59b27',
-          amber: '#e69138',
-          copper: '#b87333',
-          crema: '#fff8f0',
-          night: '#131110',
-          surface: '#1c1917',
-          card: '#24201d',
-          border: '#38322e',
-        }
+        brandRed: {
+          DEFAULT: '#ca0013',
+          hover: '#b00010',
+          light: '#ffeaec',
+        },
+        sage: {
+          DEFAULT: '#b7c6c2',
+          light: '#dbe3e1',
+          dark: '#8b9f9a',
+        },
+        offwhite: '#eeebe3',
       },
       fontFamily: {
-        sans: ['Cairo', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Nunito', 'Cairo', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      borderRadius: {
+        'hero': '40px',
+        'feed': '24px',
+        'bento': '16px',
+      },
+      boxShadow: {
+        'soft': '0 20px 50px -12px rgba(0, 0, 0, 0.08)',
+        'fab': '0 12px 30px -4px rgba(202, 0, 19, 0.35)',
+        'card': '0 10px 30px -8px rgba(23, 30, 25, 0.06)',
       },
       padding: {
         'safe-top': 'env(safe-area-inset-top)',

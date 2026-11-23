@@ -5,8 +5,23 @@
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
-    font-family: 'Cairo', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Nunito', 'Cairo', system-ui, -apple-system, sans-serif;
+    background-color: #eeebe3;
+    color: #171e19;
   }
+
+  body {
+    background-color: #eeebe3;
+    color: #171e19;
+    min-height: 100vh;
+  }
+}
+
+/* Smooth 0.25s ease-in/out transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 250ms;
 }
 
 /* Custom scrollbar-none utility */
@@ -16,11 +31,4 @@
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-/* Glassmorphism support */
-.glass {
-  background: rgba(28, 25, 23, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }

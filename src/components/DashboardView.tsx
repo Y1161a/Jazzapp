@@ -1,328 +1,370 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   AlertTriangle, 
-  CheckCircle2, 
-  Clock, 
+  Check, 
   Receipt, 
   Package, 
-  ArrowUpRight, 
-  PlusCircle, 
+  ArrowRight,
+  TrendingDown,
+  Clock,
   Sparkles,
   Zap,
-  TrendingDown,
-  CalendarCheck
+  Droplet,
+  Wifi,
+  Home,
+  Landmark,
+  ShoppingBag,
+  HelpCircle
 } from 'lucide-react';
 import { ObligationCategory } from '../types';
 
 interface DashboardViewProps {
-  onOpenAddObligation: () => void;
-  onOpenAddInventory: () => void;
+  onOpenAddObligation?: () => void;
+  onOpenAddInventory?: () => void;
 }
 
-export const DashboardView: React.FC<DashboardViewProps> = ({ 
-  onOpenAddObligation, 
-  onOpenAddInventory 
-}) => {
+type FilterCategory = 'all' | 'bills' | 'inventory' | 'urgent';
+
+export const DashboardView: React.FC<DashboardViewProps> = (props) => {
   const { t, stats, settings, obligations, inventory, setActiveTab, toggleObligationStatus } = useApp();
+  const [selectedFilter, setSelectedFilter] = useState<FilterCategory>('all');
 
-  const formattedDate = new Intl.DateTimeFormat(
-    settings.language === 'ar' ? 'ar-TN' : 'fr-FR',
-    { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
-  ).format(new Date());
-
-  // Filter urgent bills: overdue or due within 3 days
   const todayStr = new Date().toISOString().split('T')[0];
   const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
+  // Urgent items
   const urgentBills = obligations
     .filter((o) => o.status !== 'paid' && o.dueDate <= threeDaysFromNow)
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 
-  // Critical stock items (<= minThreshold)
   const lowStockItems = inventory.filter((item) => item.quantity <= item.minThreshold);
 
-  // Category translations helper
-  const getCategoryLabel = (cat: ObligationCategory) => {
+  // Category Icon helper
+  const getCategoryIcon = (cat: ObligationCategory) => {
     switch (cat) {
-      case 'electricity': return t.catElectricity;
-      case 'water': return t.catWater;
-      case 'internet': return t.catInternet;
-      case 'rent': return t.catRent;
-      case 'taxes': return t.catTaxes;
-      case 'maintenance': return t.catMaintenance;
-      case 'supplies': return t.catSupplies;
-      default: return t.catOther;
+      case 'electricity': return Zap;
+      case 'water': return Droplet;
+      case 'internet': return Wifi;
+      case 'rent': return Home;
+      case 'taxes': return Landmark;
+      case 'supplies': return ShoppingBag;
+      default: return HelpCircle;
     }
   };
 
+  // Horizontal Scroll Selector items
+  const selectorItems: { id: FilterCategory; label: string; count: number; icon: string }[] = [
+    { id: 'all', label: t.filterAll, count: obligations.length + inventory.length, icon: '☕' },
+    { id: 'bills', label: t.navObligations, count: stats.upcomingCount + stats.overdueCount, icon: '📄' },
+    { id: 'inventory', label: t.navInventory, count: inventory.length, icon: '📦' },
+    { id: 'urgent', label: t.urgentReminders, count: urgentBills.length + lowStockItems.length, icon: '⚡' },
+  ];
+
   return (
-    <div className="space-y-6 pb-6">
-      
-      {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-cafe-900 via-jazz-surface to-cafe-950 text-white shadow-xl shadow-black/20 border border-jazz-border">
-        <div className="absolute top-0 end-0 -mt-8 -me-8 w-44 h-44 rounded-full bg-jazz-gold/10 blur-2xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase tracking-wider text-jazz-gold font-bold flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              {formattedDate}
-            </span>
-            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-white/10 text-stone-200 border border-white/10">
-              {settings.cafeName}
-            </span>
-          </div>
+    <div className="space-y-6 pb-28 max-w-md mx-auto">
 
-          <div className="mt-3">
-            <h1 className="text-2xl font-black tracking-tight text-jazz-crema">
-              {t.welcomeBack}
-            </h1>
-            <p className="text-xs text-cafe-300 mt-0.5 font-medium">
-              {t.quickSummary}
-            </p>
-          </div>
+      {/* Horizontal Scroll Selector */}
+      {/* Spec: Inactive: 56x56px white square, 16px radius, #b7c6c2/30 border. Active: 160px wide pill in #171e19 with 40px red circle for value */}
+      <div className="flex items-center gap-3 overflow-x-auto snap-x snap-mandatory pb-1 scrollbar-none px-1">
+        {selectorItems.map((item) => {
+          const isActive = selectedFilter === item.id;
 
-          {/* Quick Action Buttons */}
-          <div className="mt-4 pt-3 border-t border-white/10 flex items-center gap-2">
-            <button
-              onClick={onOpenAddObligation}
-              className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-jazz-gold to-cafe-500 text-cafe-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>{t.quickAddBill}</span>
-            </button>
-            <button
-              onClick={onOpenAddInventory}
-              className="flex-1 py-2 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-jazz-crema font-bold text-xs flex items-center justify-center gap-1.5 border border-white/10 active:scale-95 transition"
-            >
-              <Package className="w-3.5 h-3.5 text-jazz-gold" />
-              <span>{t.quickAddStock}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 4 Stat Metric Cards */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Total Pending Bills */}
-        <div 
-          onClick={() => setActiveTab('obligations')} 
-          className="p-4 rounded-2xl bg-white dark:bg-jazz-surface border border-cafe-200 dark:border-jazz-border shadow-sm cursor-pointer hover:border-cafe-400 dark:hover:border-jazz-gold/40 transition active:scale-[0.98]"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-cafe-600 dark:text-stone-400">
-              {t.totalPendingBills}
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
-              <Receipt className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-xl font-extrabold text-cafe-900 dark:text-jazz-crema">
-              {stats.totalPending.toLocaleString()}
-            </span>
-            <span className="text-xs font-bold text-cafe-600 dark:text-jazz-amber">
-              {settings.currency}
-            </span>
-          </div>
-          <div className="mt-1 flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
-            <Clock className="w-3 h-3" />
-            <span>{stats.overdueCount > 0 ? `${stats.overdueCount} ${t.statusOverdue}` : `${stats.upcomingCount} ${t.upcomingBillsCount}`}</span>
-          </div>
-        </div>
-
-        {/* Total Paid This Month */}
-        <div 
-          onClick={() => setActiveTab('obligations')}
-          className="p-4 rounded-2xl bg-white dark:bg-jazz-surface border border-cafe-200 dark:border-jazz-border shadow-sm cursor-pointer hover:border-cafe-400 dark:hover:border-jazz-gold/40 transition active:scale-[0.98]"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-cafe-600 dark:text-stone-400">
-              {t.totalPaidBills}
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-xl font-extrabold text-cafe-900 dark:text-jazz-crema">
-              {stats.totalPaidThisMonth.toLocaleString()}
-            </span>
-            <span className="text-xs font-bold text-cafe-600 dark:text-jazz-amber">
-              {settings.currency}
-            </span>
-          </div>
-          <div className="mt-1 flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-            <CalendarCheck className="w-3 h-3" />
-            <span>{t.statusPaid}</span>
-          </div>
-        </div>
-
-        {/* Low Stock Warning Card */}
-        <div 
-          onClick={() => setActiveTab('inventory')}
-          className={`p-4 rounded-2xl border shadow-sm cursor-pointer transition active:scale-[0.98] ${
-            stats.lowStockCount > 0 
-              ? 'bg-rose-50/70 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/50' 
-              : 'bg-white dark:bg-jazz-surface border-cafe-200 dark:border-jazz-border'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-cafe-600 dark:text-stone-400">
-              {t.lowStockAlertsCount}
-            </span>
-            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-              stats.lowStockCount > 0 ? 'bg-rose-500/15 text-rose-500 animate-pulse' : 'bg-cafe-100 dark:bg-jazz-card text-cafe-500'
-            }`}>
-              <AlertTriangle className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className={`text-xl font-extrabold ${stats.lowStockCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-cafe-900 dark:text-jazz-crema'}`}>
-              {stats.lowStockCount}
-            </span>
-            <span className="text-xs font-medium text-cafe-500">
-              {settings.language === 'ar' ? 'مواد' : 'articles'}
-            </span>
-          </div>
-          <div className="mt-1 text-[11px] font-semibold text-cafe-500 dark:text-stone-400">
-            {stats.lowStockCount > 0 ? (
-              <span className="text-rose-600 dark:text-rose-400">{t.stockLow}</span>
-            ) : (
-              <span className="text-emerald-600 dark:text-emerald-400">{t.stockHealthy}</span>
-            )}
-          </div>
-        </div>
-
-        {/* Total Inventory Items */}
-        <div 
-          onClick={() => setActiveTab('inventory')}
-          className="p-4 rounded-2xl bg-white dark:bg-jazz-surface border border-cafe-200 dark:border-jazz-border shadow-sm cursor-pointer hover:border-cafe-400 dark:hover:border-jazz-gold/40 transition active:scale-[0.98]"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-cafe-600 dark:text-stone-400">
-              {t.inventoryTitle}
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-cafe-500/10 text-cafe-600 dark:text-jazz-gold flex items-center justify-center">
-              <Package className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-xl font-extrabold text-cafe-900 dark:text-jazz-crema">
-              {inventory.length}
-            </span>
-            <span className="text-xs font-medium text-cafe-500">
-              {settings.language === 'ar' ? 'صنف مسجل' : 'références'}
-            </span>
-          </div>
-          <div className="mt-1 flex items-center gap-1 text-[11px] text-cafe-600 dark:text-jazz-amber font-semibold">
-            <ArrowUpRight className="w-3 h-3" />
-            <span>{t.viewAll}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Urgent Reminders Section */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-extrabold text-cafe-900 dark:text-jazz-crema flex items-center gap-1.5">
-            <Zap className="w-4 h-4 text-jazz-gold" />
-            <span>{t.urgentReminders}</span>
-          </h2>
-          <span className="text-xs font-bold text-cafe-500 dark:text-stone-400">
-            {urgentBills.length + lowStockItems.length} {settings.language === 'ar' ? 'تنبيه' : 'alertes'}
-          </span>
-        </div>
-
-        {urgentBills.length === 0 && lowStockItems.length === 0 ? (
-          <div className="p-6 rounded-2xl bg-white dark:bg-jazz-surface border border-cafe-200 dark:border-jazz-border text-center">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 mx-auto flex items-center justify-center mb-2">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <p className="text-xs font-bold text-cafe-800 dark:text-stone-200">
-              {t.noUrgentAlerts}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            {/* Urgent Bills list */}
-            {urgentBills.map((bill) => {
-              const isOverdue = bill.dueDate < todayStr;
-              return (
-                <div 
-                  key={bill.id}
-                  className="p-3.5 rounded-2xl bg-white dark:bg-jazz-surface border border-amber-200 dark:border-amber-900/40 shadow-sm flex items-center justify-between gap-3"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                      isOverdue ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'
-                    }`}>
-                      <Receipt className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-xs text-cafe-900 dark:text-stone-100 truncate">
-                          {bill.title}
-                        </span>
-                        <span className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded-md ${
-                          isOverdue 
-                            ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400' 
-                            : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400'
-                        }`}>
-                          {isOverdue ? t.statusOverdue : (bill.dueDate === todayStr ? t.today : `${t.dueIn} ${bill.dueDate}`)}
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-cafe-500 dark:text-stone-400 mt-0.5">
-                        {getCategoryLabel(bill.category)} · <span className="font-bold text-cafe-800 dark:text-jazz-amber">{bill.amount} {bill.currency}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => toggleObligationStatus(bill.id)}
-                    className="shrink-0 px-3 py-1.5 rounded-xl bg-cafe-100 dark:bg-jazz-card hover:bg-emerald-500 hover:text-white dark:hover:bg-emerald-600 text-xs font-bold text-cafe-800 dark:text-stone-200 border border-cafe-300 dark:border-jazz-border transition active:scale-95"
-                  >
-                    {t.markAsPaid}
-                  </button>
-                </div>
-              );
-            })}
-
-            {/* Low Stock Items list */}
-            {lowStockItems.map((item) => (
-              <div 
+          if (isActive) {
+            return (
+              <button
                 key={item.id}
-                className="p-3.5 rounded-2xl bg-white dark:bg-jazz-surface border border-rose-200 dark:border-rose-900/40 shadow-sm flex items-center justify-between gap-3"
+                onClick={() => setSelectedFilter(item.id)}
+                className="w-[160px] h-14 rounded-full bg-charcoal text-white px-2 flex items-center justify-between shrink-0 shadow-md snap-start transition-all duration-200"
               >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0">
-                    <TrendingDown className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-full bg-brandRed flex items-center justify-center text-white font-black text-xs shrink-0 shadow-sm">
+                  {item.count}
+                </div>
+                <span className="text-xs font-black tracking-tight pe-3 truncate">
+                  {item.label}
+                </span>
+              </button>
+            );
+          }
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => setSelectedFilter(item.id)}
+              className="w-14 h-14 rounded-2xl bg-white border border-sage/30 flex items-center justify-center text-lg shrink-0 shadow-sm hover:border-sage active:scale-95 transition-all snap-start"
+              title={item.label}
+            >
+              <span>{item.icon}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Hero Feature Card */}
+      {/* Spec: Large white card with 40px (2.5rem) radius and subtle shadow.
+          Contains:
+          1. A semi-transparent decorative blob (#b7c6c2/20) in top-right.
+          2. A 64x64px white square icon holder with an emoji.
+          3. Nested 2-column grid for metrics using white-glass cards (80% opacity) with 16px radius.
+          4. An alert/info box at the bottom using #b7c6c2/20 background. */}
+      <div className="relative overflow-hidden rounded-[40px] bg-white p-6 shadow-soft border border-sage/20">
+        
+        {/* 1. Semi-transparent decorative blob in the top-right */}
+        <div className="absolute top-0 end-0 -mt-8 -me-8 w-44 h-44 rounded-full bg-sage/20 blur-2xl pointer-events-none" />
+
+        {/* Top Header Row: Icon holder + Title & Status */}
+        <div className="relative z-10 flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            {/* 2. 64x64px white square icon holder with an emoji */}
+            <div className="w-16 h-16 rounded-2xl bg-white border border-sage/30 shadow-card flex items-center justify-center text-2xl shrink-0">
+              ☕
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-sage block">
+                {settings.cafeName || 'JAZZAPP'} · {t.appTagline}
+              </span>
+              <h2 className="text-[20px] font-black text-charcoal leading-snug">
+                {settings.language === 'ar' ? 'الملخص المالي والتشغيلي' : 'Résumé des Opérations'}
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            {props.onOpenAddObligation && (
+              <button
+                onClick={props.onOpenAddObligation}
+                className="w-7 h-7 rounded-full bg-charcoal text-white flex items-center justify-center text-xs font-black hover:bg-brandRed transition active:scale-90"
+                title={t.quickAddBill}
+              >
+                +
+              </button>
+            )}
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-charcoal text-white">
+              {new Date().toLocaleDateString(settings.language === 'ar' ? 'ar-TN' : 'fr-FR', { month: 'short', day: 'numeric' })}
+            </span>
+          </div>
+        </div>
+
+        {/* 3. Nested 2-Column Grid for Metrics (Bento cards, 16px radius, 80% opacity white-glass) */}
+        <div className="grid grid-cols-2 gap-3 mt-5 relative z-10">
+          
+          {/* Metric 1: Total Pending Bills */}
+          <div 
+            onClick={() => setActiveTab('obligations')}
+            className="p-3 rounded-2xl bg-white/80 backdrop-blur-sm border border-sage/30 shadow-sm cursor-pointer hover:border-brandRed/40 transition active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-8 h-8 rounded-full bg-brandRed/10 flex items-center justify-center shrink-0">
+                <Receipt className="w-4 h-4 text-brandRed" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-sage truncate">
+                {t.totalPendingBills}
+              </span>
+            </div>
+            <div className="ps-1">
+              <div className="text-lg font-black text-charcoal leading-none">
+                {stats.totalPending.toLocaleString()}
+              </div>
+              <span className="text-[10px] font-bold text-sage">
+                {settings.currency} · {stats.overdueCount > 0 ? `${stats.overdueCount} ${t.statusOverdue}` : `${stats.upcomingCount} قريبة`}
+              </span>
+            </div>
+          </div>
+
+          {/* Metric 2: Stock Health */}
+          <div 
+            onClick={() => setActiveTab('inventory')}
+            className="p-3 rounded-2xl bg-white/80 backdrop-blur-sm border border-sage/30 shadow-sm cursor-pointer hover:border-brandRed/40 transition active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-8 h-8 rounded-full bg-brandRed/10 flex items-center justify-center shrink-0">
+                <Package className="w-4 h-4 text-brandRed" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-sage truncate">
+                {t.inventoryTitle}
+              </span>
+            </div>
+            <div className="ps-1">
+              <div className="text-lg font-black text-charcoal leading-none">
+                {inventory.length}
+              </div>
+              <span className="text-[10px] font-bold text-sage">
+                {stats.lowStockCount > 0 ? (
+                  <strong className="text-brandRed font-black">{stats.lowStockCount} {t.stockLow}</strong>
+                ) : (
+                  <span className="text-charcoal font-semibold">{t.stockHealthy}</span>
+                )}
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        {/* 4. Alert / Info box at bottom using #b7c6c2/20 background */}
+        <div className="mt-4 p-3.5 rounded-2xl bg-sage/20 border border-sage/30 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+              urgentBills.length > 0 || lowStockItems.length > 0
+                ? 'bg-brandRed text-white shadow-sm'
+                : 'bg-white text-charcoal'
+            }`}>
+              {urgentBills.length > 0 || lowStockItems.length > 0 ? (
+                <AlertTriangle className="w-4 h-4" />
+              ) : (
+                <Sparkles className="w-4 h-4 text-sage" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="font-extrabold text-charcoal text-xs truncate">
+                {urgentBills.length > 0 || lowStockItems.length > 0
+                  ? (settings.language === 'ar' ? 'لديك التزامات أو مواد تتطلب المتابعة الفورية' : 'Des alertes nécessitent votre attention')
+                  : t.noUrgentAlerts}
+              </p>
+              <p className="text-[10px] text-sage font-bold truncate">
+                {urgentBills.length} {settings.language === 'ar' ? 'فواتير مستعجلة' : 'charges urgentes'} · {lowStockItems.length} {settings.language === 'ar' ? 'مواد منخفضة' : 'stocks bas'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setActiveTab(urgentBills.length > 0 ? 'obligations' : 'inventory')}
+            className="w-8 h-8 rounded-full bg-white text-charcoal flex items-center justify-center shrink-0 hover:bg-brandRed hover:text-white transition active:scale-90 shadow-sm"
+          >
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
+      </div>
+
+      {/* Secondary Feed Items */}
+      {/* Spec: Vertical list of cards with 24px radius, white background, #b7c6c2/30 border.
+          Features:
+          - 56px icon container with 10% opacity color background
+          - 18px bold headings
+          - Circular trailing checkbox button (40px) that changes to red on hover/click */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-2">
+          <h3 className="text-[18px] font-black text-charcoal tracking-tight flex items-center gap-1.5">
+            <Clock className="w-4 h-4 text-sage" />
+            <span>{settings.language === 'ar' ? 'الالتزامات والمواد الأقرب' : 'Charges & Stocks Prioritaires'}</span>
+          </h3>
+          <button 
+            onClick={() => setActiveTab('obligations')}
+            className="text-xs font-bold text-sage hover:text-charcoal"
+          >
+            {t.viewAll}
+          </button>
+        </div>
+
+        {/* Feed Cards List */}
+        <div className="space-y-2.5">
+          {/* Urgent Bills in Feed */}
+          {urgentBills.map((bill) => {
+            const Icon = getCategoryIcon(bill.category);
+            const isOverdue = bill.dueDate < todayStr;
+
+            return (
+              <div
+                key={bill.id}
+                className="p-4 rounded-[24px] bg-white border border-sage/30 shadow-card flex items-center justify-between gap-3 hover:border-sage transition"
+              >
+                {/* 56px Icon Container with 10% opacity color background */}
+                <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
+                    isOverdue ? 'bg-brandRed/10 text-brandRed' : 'bg-charcoal/10 text-charcoal'
+                  }`}>
+                    <Icon className="w-6 h-6 stroke-[2]" />
                   </div>
+
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-xs text-cafe-900 dark:text-stone-100 truncate">
-                        {item.name}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-sage">
+                        {bill.dueDate}
                       </span>
-                      <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-md bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
-                        {t.stockLow}
-                      </span>
+                      {isOverdue && (
+                        <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-brandRed text-white">
+                          {t.statusOverdue}
+                        </span>
+                      )}
                     </div>
-                    <div className="text-[11px] text-cafe-500 dark:text-stone-400 mt-0.5">
-                      {t.currentStock}: <span className="font-bold text-rose-600 dark:text-rose-400">{item.quantity} {item.unit}</span> (الحد: {item.minThreshold} {item.unit})
-                    </div>
+                    {/* 18px bold heading */}
+                    <h4 className="text-[17px] font-extrabold text-charcoal truncate mt-0.5">
+                      {bill.title}
+                    </h4>
+                    <p className="text-xs font-black text-brandRed mt-0.5">
+                      {bill.amount.toLocaleString()} <span className="text-[10px] font-bold text-sage">{bill.currency}</span>
+                    </p>
                   </div>
                 </div>
 
+                {/* Circular trailing checkbox button (40px) that changes to red on hover/click */}
                 <button
-                  onClick={() => setActiveTab('inventory')}
-                  className="shrink-0 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cafe-700 to-jazz-gold text-white text-xs font-bold shadow-sm active:scale-95 transition"
+                  onClick={() => toggleObligationStatus(bill.id)}
+                  className="w-10 h-10 rounded-full border-2 border-sage/40 flex items-center justify-center text-sage hover:border-brandRed hover:bg-brandRed hover:text-white transition active:scale-90 shrink-0"
+                  title={t.markAsPaid}
                 >
-                  {t.quickStockIn}
+                  <Check className="w-5 h-5 stroke-[3]" />
                 </button>
               </div>
-            ))}
-          </div>
-        )}
+            );
+          })}
+
+          {/* Low Stock Items in Feed */}
+          {lowStockItems.map((item) => (
+            <div
+              key={item.id}
+              className="p-4 rounded-[24px] bg-white border border-sage/30 shadow-card flex items-center justify-between gap-3 hover:border-sage transition"
+            >
+              {/* 56px Icon Container */}
+              <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                <div className="w-14 h-14 rounded-2xl bg-brandRed/10 text-brandRed flex items-center justify-center shrink-0">
+                  <TrendingDown className="w-6 h-6 stroke-[2]" />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-sage">
+                      {t.navInventory}
+                    </span>
+                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-brandRed text-white">
+                      {t.stockLow}
+                    </span>
+                  </div>
+                  <h4 className="text-[17px] font-extrabold text-charcoal truncate mt-0.5">
+                    {item.name}
+                  </h4>
+                  <p className="text-xs font-extrabold text-charcoal mt-0.5">
+                    {item.quantity} {item.unit} <span className="text-[10px] text-sage font-medium">({t.itemMinThreshold}: {item.minThreshold})</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* 40px Action Button */}
+              <button
+                onClick={() => setActiveTab('inventory')}
+                className="w-10 h-10 rounded-full border-2 border-sage/40 flex items-center justify-center text-sage hover:border-brandRed hover:bg-brandRed hover:text-white transition active:scale-90 shrink-0 font-black text-lg"
+                title={t.quickStockIn}
+              >
+                +
+              </button>
+            </div>
+          ))}
+
+          {/* If no urgent items: show clean placeholder card */}
+          {urgentBills.length === 0 && lowStockItems.length === 0 && (
+            <div className="p-8 rounded-[24px] bg-white border border-sage/30 text-center shadow-card space-y-2">
+              <div className="w-12 h-12 rounded-full bg-sage/20 text-charcoal mx-auto flex items-center justify-center text-xl">
+                ✨
+              </div>
+              <h4 className="text-[16px] font-black text-charcoal">
+                {t.noUrgentAlerts}
+              </h4>
+              <p className="text-xs text-sage font-bold">
+                {settings.language === 'ar' ? 'جميع الفواتير مدفوعة أو بعيدة الأجل، والمخزون في مستوى ممتاز.' : 'Toutes les charges sont à jour et le stock est optimal.'}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
     </div>

@@ -1,69 +1,98 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { LayoutDashboard, ReceiptText, PackageOpen, Settings } from 'lucide-react';
-import { TabType } from '../types';
+import { LayoutDashboard, ReceiptText, PackageOpen, Settings, Plus } from 'lucide-react';
 
-export const BottomNav: React.FC = () => {
-  const { activeTab, setActiveTab, t, stats } = useApp();
+interface BottomNavProps {
+  onCenterAction: () => void;
+}
 
-  const navItems: { id: TabType; label: string; icon: React.FC<{ className?: string }>; badge?: number }[] = [
-    {
-      id: 'dashboard',
-      label: t.navDashboard,
-      icon: LayoutDashboard,
-    },
-    {
-      id: 'obligations',
-      label: t.navObligations,
-      icon: ReceiptText,
-      badge: stats.overdueCount > 0 ? stats.overdueCount : (stats.upcomingCount > 0 ? stats.upcomingCount : undefined),
-    },
-    {
-      id: 'inventory',
-      label: t.navInventory,
-      icon: PackageOpen,
-      badge: stats.lowStockCount > 0 ? stats.lowStockCount : undefined,
-    },
-    {
-      id: 'settings',
-      label: t.navSettings,
-      icon: Settings,
-    },
-  ];
+export const BottomNav: React.FC<BottomNavProps> = ({ onCenterAction }) => {
+  const { activeTab, setActiveTab, t } = useApp();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-cafe-50/95 dark:bg-jazz-night/95 backdrop-blur-md border-t border-cafe-200 dark:border-jazz-border pb-safe transition-colors duration-200 shadow-lg shadow-black/10">
-      <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-around">
-        {navItems.map((item) => {
-          const isActive = activeTab === item.id;
-          const Icon = item.icon;
+    <div className="fixed bottom-2 inset-x-3 max-w-md mx-auto z-40">
+      <nav className="relative h-16 rounded-full bg-charcoal px-3 flex items-center justify-between shadow-[0_20px_50px_-10px_rgba(23,30,25,0.4)] border border-sage/20">
+        
+        {/* Left Side: Dashboard & Obligations */}
+        <div className="flex items-center gap-1 flex-1 justify-around">
+          {/* Dashboard Tab */}
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition active:scale-95 ${
+              activeTab === 'dashboard' ? 'text-white' : 'text-sage hover:text-white'
+            }`}
+            title={t.navDashboard}
+            aria-label={t.navDashboard}
+          >
+            <LayoutDashboard className={`w-5 h-5 ${activeTab === 'dashboard' ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
+            <span className="text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-[50px]">
+              {t.navDashboard}
+            </span>
+          </button>
 
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`relative flex flex-col items-center justify-center flex-1 h-full py-1 text-xs font-semibold transition-all duration-150 ${
-                isActive
-                  ? 'text-cafe-900 dark:text-jazz-gold scale-105'
-                  : 'text-cafe-500 dark:text-stone-400 hover:text-cafe-700 dark:hover:text-stone-200'
-              }`}
-            >
-              <div className="relative">
-                <Icon className={`w-5 h-5 transition-transform ${isActive ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className="absolute -top-1.5 -end-2.5 min-w-[18px] h-[18px] px-1 text-[10px] font-black leading-none flex items-center justify-center rounded-full bg-rose-600 text-white shadow-sm ring-2 ring-cafe-50 dark:ring-jazz-night">
-                    {item.badge}
-                  </span>
-                )}
-              </div>
-              <span className="mt-1 text-[11px] truncate max-w-[70px]">{item.label}</span>
-              {isActive && (
-                <span className="absolute bottom-1 w-6 h-1 rounded-full bg-gradient-to-r from-cafe-700 to-jazz-gold" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </nav>
+          {/* Obligations Tab */}
+          <button
+            onClick={() => setActiveTab('obligations')}
+            className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition active:scale-95 ${
+              activeTab === 'obligations' ? 'text-white' : 'text-sage hover:text-white'
+            }`}
+            title={t.navObligations}
+            aria-label={t.navObligations}
+          >
+            <ReceiptText className={`w-5 h-5 ${activeTab === 'obligations' ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
+            <span className="text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-[50px]">
+              {t.navObligations}
+            </span>
+          </button>
+        </div>
+
+        {/* Center Floating Action Button (FAB) */}
+        {/* Spec: 56px red circular button using #ca0013, offset vertically by -32px, 4px #eeebe3 border */}
+        <div className="relative -top-7 flex items-center justify-center px-1">
+          <button
+            onClick={onCenterAction}
+            className="w-14 h-14 rounded-full bg-brandRed flex items-center justify-center text-white border-4 border-offwhite shadow-[0_12px_28px_-4px_rgba(202,0,19,0.5)] active:scale-90 hover:bg-brandRed-hover transition duration-200"
+            title={t.quickAddBill}
+            aria-label="Add"
+          >
+            <Plus className="w-7 h-7 stroke-[2.5]" />
+          </button>
+        </div>
+
+        {/* Right Side: Inventory & Settings */}
+        <div className="flex items-center gap-1 flex-1 justify-around">
+          {/* Inventory Tab */}
+          <button
+            onClick={() => setActiveTab('inventory')}
+            className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition active:scale-95 ${
+              activeTab === 'inventory' ? 'text-white' : 'text-sage hover:text-white'
+            }`}
+            title={t.navInventory}
+            aria-label={t.navInventory}
+          >
+            <PackageOpen className={`w-5 h-5 ${activeTab === 'inventory' ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
+            <span className="text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-[50px]">
+              {t.navInventory}
+            </span>
+          </button>
+
+          {/* Settings Tab */}
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition active:scale-95 ${
+              activeTab === 'settings' ? 'text-white' : 'text-sage hover:text-white'
+            }`}
+            title={t.navSettings}
+            aria-label={t.navSettings}
+          >
+            <Settings className={`w-5 h-5 ${activeTab === 'settings' ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
+            <span className="text-[9px] font-bold mt-0.5 tracking-tight truncate max-w-[50px]">
+              {t.navSettings}
+            </span>
+          </button>
+        </div>
+
+      </nav>
+    </div>
   );
 };

@@ -2,8 +2,6 @@ import React, { useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Globe, 
-  Moon, 
-  Sun, 
   Coins, 
   Store, 
   Bell, 
@@ -22,8 +20,6 @@ export const SettingsView: React.FC = () => {
     t, 
     language, 
     setLanguage, 
-    theme, 
-    toggleTheme, 
     settings, 
     updateSettings, 
     exportData, 
@@ -80,54 +76,67 @@ export const SettingsView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 pb-8">
+    <div className="space-y-5 pb-28 max-w-md mx-auto">
       
-      {/* Title */}
-      <div>
-        <h1 className="text-xl font-black text-cafe-900 dark:text-jazz-crema">
-          {t.settingsTitle}
-        </h1>
-        <p className="text-xs text-cafe-500 dark:text-stone-400 mt-0.5">
-          {t.generalSettings}
-        </p>
+      {/* Creator Profile Hero Card (40px radius) */}
+      <div className="p-6 rounded-[40px] bg-charcoal text-white shadow-soft relative overflow-hidden border border-sage/20">
+        <div className="absolute top-0 end-0 -mt-8 -me-8 w-44 h-44 rounded-full bg-brandRed/20 blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-white text-charcoal flex items-center justify-center shrink-0 border-2 border-sage/40 shadow-card">
+            <Coffee className="w-8 h-8 text-charcoal" />
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5 text-xs text-brandRed font-black">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{t.creatorBadge}</span>
+            </div>
+            <h2 className="text-[22px] font-black text-white leading-tight">
+              {settings.ownerName || 'ياسين وشتاتي'}
+            </h2>
+            <p className="text-[11px] text-sage font-medium mt-0.5">
+              {settings.cafeName} · {t.version}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* App Appearance & Language Card */}
-      <div className="p-4 rounded-3xl bg-white dark:bg-jazz-surface border border-cafe-200 dark:border-jazz-border shadow-sm space-y-4">
+      {/* App Configuration Card (24px radius) */}
+      <div className="p-5 rounded-[24px] bg-white border border-sage/30 shadow-card space-y-4">
         
         {/* Language Selector */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-cafe-500/10 text-cafe-700 dark:text-jazz-gold flex items-center justify-center">
-              <Globe className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-charcoal/10 text-charcoal flex items-center justify-center">
+              <Globe className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-xs font-bold text-cafe-900 dark:text-stone-100 block">
+              <span className="text-xs font-black text-charcoal block">
                 {t.language}
               </span>
-              <span className="text-[11px] text-cafe-500 dark:text-stone-400">
-                {language === 'ar' ? 'العربية مع اتجاه RTL' : 'Français avec LTR'}
+              <span className="text-[10px] text-sage font-bold">
+                {language === 'ar' ? 'العربية (RTL)' : 'Français (LTR)'}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1 bg-cafe-100 dark:bg-jazz-card p-1 rounded-2xl border border-cafe-200 dark:border-jazz-border">
+          <div className="flex items-center gap-1 bg-offwhite p-1 rounded-full border border-sage/30">
             <button
               onClick={() => setLanguage('ar')}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition ${
+              className={`px-3 py-1 rounded-full text-xs font-black transition ${
                 language === 'ar'
-                  ? 'bg-cafe-900 text-white dark:bg-jazz-gold dark:text-cafe-950 shadow-sm'
-                  : 'text-cafe-600 dark:text-stone-400 hover:text-cafe-900'
+                  ? 'bg-charcoal text-white shadow-sm'
+                  : 'text-sage hover:text-charcoal'
               }`}
             >
               عربي
             </button>
             <button
               onClick={() => setLanguage('fr')}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition ${
+              className={`px-3 py-1 rounded-full text-xs font-black transition ${
                 language === 'fr'
-                  ? 'bg-cafe-900 text-white dark:bg-jazz-gold dark:text-cafe-950 shadow-sm'
-                  : 'text-cafe-600 dark:text-stone-400 hover:text-cafe-900'
+                  ? 'bg-charcoal text-white shadow-sm'
+                  : 'text-sage hover:text-charcoal'
               }`}
             >
               FR
@@ -135,41 +144,17 @@ export const SettingsView: React.FC = () => {
           </div>
         </div>
 
-        {/* Theme Selector */}
-        <div className="flex items-center justify-between pt-3 border-t border-cafe-100 dark:border-jazz-border/60">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-cafe-500/10 text-cafe-700 dark:text-jazz-gold flex items-center justify-center">
-              {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-            </div>
-            <div>
-              <span className="text-xs font-bold text-cafe-900 dark:text-stone-100 block">
-                {t.theme}
-              </span>
-              <span className="text-[11px] text-cafe-500 dark:text-stone-400">
-                {theme === 'dark' ? t.themeDark : t.themeLight}
-              </span>
-            </div>
-          </div>
-
-          <button
-            onClick={toggleTheme}
-            className="px-3.5 py-1.5 rounded-xl border border-cafe-300 dark:border-jazz-border text-xs font-bold bg-cafe-50 dark:bg-jazz-card text-cafe-800 dark:text-stone-200 active:scale-95 transition"
-          >
-            {theme === 'dark' ? 'تبديل للنهاري' : 'تبديل للداكن'}
-          </button>
-        </div>
-
         {/* Currency Selector */}
-        <div className="flex items-center justify-between pt-3 border-t border-cafe-100 dark:border-jazz-border/60">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-cafe-500/10 text-cafe-700 dark:text-jazz-gold flex items-center justify-center">
-              <Coins className="w-4 h-4" />
+        <div className="flex items-center justify-between pt-3 border-t border-sage/20">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-charcoal/10 text-charcoal flex items-center justify-center">
+              <Coins className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-xs font-bold text-cafe-900 dark:text-stone-100 block">
+              <span className="text-xs font-black text-charcoal block">
                 {t.currency}
               </span>
-              <span className="text-[11px] text-cafe-500 dark:text-stone-400">
+              <span className="text-[10px] text-sage font-bold">
                 {settings.currency}
               </span>
             </div>
@@ -178,7 +163,7 @@ export const SettingsView: React.FC = () => {
           <select
             value={settings.currency}
             onChange={(e) => updateSettings({ currency: e.target.value })}
-            className="px-3 py-1.5 rounded-xl border border-cafe-300 dark:border-jazz-border text-xs font-bold bg-cafe-50 dark:bg-jazz-card text-cafe-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-jazz-gold"
+            className="px-3 py-2 rounded-2xl border border-sage/40 text-xs font-black bg-offwhite text-charcoal focus:outline-none focus:border-charcoal"
           >
             {currencies.map((c) => (
               <option key={c.code} value={c.code}>{c.label}</option>
@@ -188,76 +173,69 @@ export const SettingsView: React.FC = () => {
 
       </div>
 
-      {/* Cafe Profile Card */}
-      <div className="p-4 rounded-3xl bg-white dark:bg-jazz-surface border border-cafe-200 dark:border-jazz-border shadow-sm space-y-3.5">
-        <h2 className="text-xs font-extrabold uppercase tracking-wider text-cafe-500 dark:text-jazz-amber flex items-center gap-1.5">
-          <Store className="w-4 h-4" />
+      {/* Cafe Profile Card (24px radius) */}
+      <div className="p-5 rounded-[24px] bg-white border border-sage/30 shadow-card space-y-3.5">
+        <h3 className="text-[11px] font-black uppercase tracking-wider text-sage flex items-center gap-1.5">
+          <Store className="w-4 h-4 text-charcoal" />
           <span>{t.cafeInfo}</span>
-        </h2>
+        </h3>
 
         <div className="space-y-3 text-xs">
           <div>
-            <label className="block font-bold text-cafe-800 dark:text-stone-200 mb-1">
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-sage mb-1">
               {t.cafeNameInput}
             </label>
             <input
               type="text"
               value={settings.cafeName}
               onChange={(e) => updateSettings({ cafeName: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl bg-cafe-50 dark:bg-jazz-card border border-cafe-300 dark:border-jazz-border text-xs text-cafe-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-jazz-gold font-bold"
+              className="w-full px-4 py-2.5 rounded-2xl bg-offwhite border border-sage/30 text-xs text-charcoal font-black focus:outline-none focus:border-charcoal"
             />
           </div>
 
           <div>
-            <label className="block font-bold text-cafe-800 dark:text-stone-200 mb-1">
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-sage mb-1">
               {t.ownerNameInput}
             </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={settings.ownerName}
-                onChange={(e) => updateSettings({ ownerName: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-cafe-50 dark:bg-jazz-card border border-cafe-300 dark:border-jazz-border text-xs text-cafe-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-jazz-gold font-bold"
-              />
-              <div className="absolute end-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[11px] text-jazz-gold font-extrabold">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>المنشئ</span>
-              </div>
-            </div>
+            <input
+              type="text"
+              value={settings.ownerName}
+              onChange={(e) => updateSettings({ ownerName: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-2xl bg-offwhite border border-sage/30 text-xs text-charcoal font-black focus:outline-none focus:border-charcoal"
+            />
           </div>
         </div>
       </div>
 
-      {/* Mobile PWA & Notifications Card */}
-      <div className="p-4 rounded-3xl bg-white dark:bg-jazz-surface border border-cafe-200 dark:border-jazz-border shadow-sm space-y-3">
+      {/* Notifications Card (24px radius) */}
+      <div className="p-5 rounded-[24px] bg-white border border-sage/30 shadow-card space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-              <Bell className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-brandRed/10 text-brandRed flex items-center justify-center">
+              <Bell className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-xs font-bold text-cafe-900 dark:text-stone-100 block">
+              <span className="text-xs font-black text-charcoal block">
                 {t.notificationsStatus}
               </span>
-              <span className="text-[11px] text-cafe-500 dark:text-stone-400">
+              <span className="text-[10px] text-sage font-bold">
                 {hasNotificationPermission ? t.notificationsAllowed : t.notificationsBlocked}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => notifications.playJazzChime()}
-              className="px-2.5 py-1.5 rounded-xl bg-cafe-100 dark:bg-jazz-card text-cafe-700 dark:text-stone-300 text-xs font-bold border border-cafe-200 dark:border-jazz-border active:scale-95 transition"
-              title={t.testChime}
+              className="px-3 py-1.5 rounded-full bg-offwhite text-charcoal text-xs font-bold border border-sage/40 hover:border-charcoal active:scale-95 transition"
             >
-              تجربة الصوت
+              {settings.language === 'ar' ? 'تجربة النغمة' : 'Tester'}
             </button>
 
             {!hasNotificationPermission && (
               <button
                 onClick={handleRequestNotifications}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cafe-700 to-jazz-gold text-white text-xs font-bold shadow-sm active:scale-95 transition"
+                className="px-4 py-1.5 rounded-full bg-brandRed text-white text-xs font-black shadow-fab active:scale-95 transition"
               >
                 {t.enableNotifications}
               </button>
@@ -266,43 +244,43 @@ export const SettingsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Data Sovereignty, Backup & Restore Card */}
-      <div className="p-4 rounded-3xl bg-white dark:bg-jazz-surface border border-cafe-200 dark:border-jazz-border shadow-sm space-y-3.5">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-            <ShieldCheck className="w-4 h-4" />
+      {/* Data Sovereignty Card (24px radius) */}
+      <div className="p-5 rounded-[24px] bg-white border border-sage/30 shadow-card space-y-3.5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-2xl bg-charcoal/10 text-charcoal flex items-center justify-center">
+            <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xs font-extrabold text-cafe-900 dark:text-jazz-crema">
+            <h3 className="text-xs font-black text-charcoal">
               {t.dataManagement}
-            </h2>
-            <p className="text-[11px] text-cafe-500 dark:text-stone-400">
+            </h3>
+            <p className="text-[10px] text-sage font-bold">
               {t.dataDesc}
             </p>
           </div>
         </div>
 
         {importStatus && (
-          <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 font-bold flex items-center gap-1.5">
-            <Check className="w-4 h-4" />
+          <div className="p-3 rounded-2xl bg-sage/20 border border-sage/40 text-xs text-charcoal font-black flex items-center gap-2">
+            <Check className="w-4 h-4 text-charcoal" />
             <span>{importStatus}</span>
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-2 pt-1">
+        <div className="grid grid-cols-2 gap-2.5 pt-1">
           <button
             onClick={exportData}
-            className="py-2.5 px-3 rounded-2xl bg-cafe-50 dark:bg-jazz-card border border-cafe-300 dark:border-jazz-border text-cafe-900 dark:text-stone-200 text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-cafe-100 dark:hover:bg-jazz-border/40 transition active:scale-95 shadow-sm"
+            className="py-3 px-3 rounded-2xl bg-offwhite border border-sage/40 text-charcoal text-xs font-black flex items-center justify-center gap-1.5 hover:border-charcoal active:scale-95 transition"
           >
-            <Download className="w-4 h-4 text-jazz-gold" />
+            <Download className="w-4 h-4 text-charcoal" />
             <span>{t.exportBackup}</span>
           </button>
 
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="py-2.5 px-3 rounded-2xl bg-cafe-50 dark:bg-jazz-card border border-cafe-300 dark:border-jazz-border text-cafe-900 dark:text-stone-200 text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-cafe-100 dark:hover:bg-jazz-border/40 transition active:scale-95 shadow-sm"
+            className="py-3 px-3 rounded-2xl bg-offwhite border border-sage/40 text-charcoal text-xs font-black flex items-center justify-center gap-1.5 hover:border-charcoal active:scale-95 transition"
           >
-            <Upload className="w-4 h-4 text-emerald-500" />
+            <Upload className="w-4 h-4 text-charcoal" />
             <span>{t.importBackup}</span>
           </button>
           
@@ -315,44 +293,18 @@ export const SettingsView: React.FC = () => {
           />
         </div>
 
-        <div className="pt-2 border-t border-cafe-100 dark:border-jazz-border/60">
+        <div className="pt-2 border-t border-sage/20">
           <button
             onClick={() => {
               if (window.confirm(t.confirmReset)) {
                 resetAll();
               }
             }}
-            className="w-full py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-bold flex items-center justify-center gap-1.5 transition"
+            className="w-full py-2.5 rounded-2xl text-brandRed hover:bg-brandRed/10 text-xs font-black flex items-center justify-center gap-1.5 transition"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-4 h-4" />
             <span>{t.resetData}</span>
           </button>
-        </div>
-      </div>
-
-      {/* About & Creator Attribution Box */}
-      <div className="p-5 rounded-3xl bg-gradient-to-br from-cafe-900 via-cafe-950 to-black text-white border border-jazz-border shadow-lg space-y-2 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-jazz-gold/15 border border-jazz-gold/30 text-jazz-gold mx-auto flex items-center justify-center mb-1">
-          <Coffee className="w-6 h-6" />
-        </div>
-        <h3 className="text-base font-black tracking-tight text-jazz-crema">
-          Jazzapp — جاز آب
-        </h3>
-        <p className="text-xs text-cafe-300 font-medium max-w-xs mx-auto">
-          تطبيق الويب التقدمي (PWA) الذكي لإدارة التزامات ومخزون المقاهي
-        </p>
-
-        <div className="pt-3 border-t border-white/10 flex flex-col items-center gap-1">
-          <div className="flex items-center gap-1.5 text-xs text-jazz-gold font-extrabold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{t.designedBy}</span>
-          </div>
-          <span className="text-sm font-black text-white">
-            {t.ownerFullName}
-          </span>
-          <span className="text-[10px] text-cafe-400 mt-0.5">
-            {t.version} · حماية تامة وبيانات محلية 100%
-          </span>
         </div>
       </div>
 

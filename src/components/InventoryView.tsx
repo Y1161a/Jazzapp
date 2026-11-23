@@ -46,7 +46,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   const [onlyLowStock, setOnlyLowStock] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
-  // Editing state
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
   // Quick Adjustment Modal State
@@ -55,7 +54,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   const [adjustAmount, setAdjustAmount] = useState<number | ''>('');
   const [adjustNote, setAdjustNote] = useState('');
 
-  // Form State for Add / Edit
+  // Form State
   const [formName, setFormName] = useState('');
   const [formCategory, setFormCategory] = useState<InventoryCategory>('coffee');
   const [formQuantity, setFormQuantity] = useState<number | ''>('');
@@ -64,23 +63,15 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   const [formCostPerUnit, setFormCostPerUnit] = useState<number | ''>('');
   const [formNotes, setFormNotes] = useState('');
 
-  // Category metadata helper
   const getCategoryMeta = (cat: InventoryCategory) => {
     switch (cat) {
-      case 'coffee':
-        return { label: t.catCoffee, icon: Coffee, color: 'text-amber-600 bg-amber-500/10 border-amber-500/20' };
-      case 'milk':
-        return { label: t.catMilk, icon: Milk, color: 'text-sky-500 bg-sky-500/10 border-sky-500/20' };
-      case 'beverages':
-        return { label: t.catBeverages, icon: Wine, color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20' };
-      case 'pastry':
-        return { label: t.catPastry, icon: Cookie, color: 'text-orange-500 bg-orange-500/10 border-orange-500/20' };
-      case 'disposables':
-        return { label: t.catDisposables, icon: ShoppingBag, color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' };
-      case 'cleaning':
-        return { label: t.catCleaning, icon: Sparkles, color: 'text-teal-500 bg-teal-500/10 border-teal-500/20' };
-      default:
-        return { label: t.catOther, icon: Package, color: 'text-stone-500 bg-stone-500/10 border-stone-500/20' };
+      case 'coffee': return { label: t.catCoffee, icon: Coffee };
+      case 'milk': return { label: t.catMilk, icon: Milk };
+      case 'beverages': return { label: t.catBeverages, icon: Wine };
+      case 'pastry': return { label: t.catPastry, icon: Cookie };
+      case 'disposables': return { label: t.catDisposables, icon: ShoppingBag };
+      case 'cleaning': return { label: t.catCleaning, icon: Sparkles };
+      default: return { label: t.catOther, icon: Package };
     }
   };
 
@@ -90,7 +81,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
   const units: InventoryUnit[] = ['kg', 'g', 'L', 'ml', 'piece', 'box', 'pack'];
 
-  // Filtered Inventory
   const filteredInventory = useMemo(() => {
     return inventory.filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -180,57 +170,59 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   };
 
   return (
-    <div className="space-y-4 pb-6">
+    <div className="space-y-5 pb-28 max-w-md mx-auto">
       
-      {/* Title & Actions */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-black text-cafe-900 dark:text-jazz-crema">
-            {t.inventoryTitle}
-          </h1>
-          <p className="text-xs text-cafe-500 dark:text-stone-400 mt-0.5">
-            {inventory.length} {settings.language === 'ar' ? 'مادة مسجلة' : 'articles'}
-          </p>
-        </div>
+      {/* Header Summary Card (40px radius) */}
+      <div className="p-6 rounded-[40px] bg-white border border-sage/20 shadow-soft relative overflow-hidden">
+        <div className="absolute top-0 end-0 -mt-6 -me-6 w-36 h-36 rounded-full bg-sage/20 blur-xl pointer-events-none" />
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowHistory(!showHistory)}
-            className={`p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${
-              showHistory
-                ? 'bg-cafe-900 text-white dark:bg-jazz-gold dark:text-cafe-950 border-transparent shadow-sm'
-                : 'bg-white dark:bg-jazz-surface text-cafe-700 dark:text-stone-300 border-cafe-200 dark:border-jazz-border'
-            }`}
-            title="سجل الحركات"
-          >
-            <History className="w-4 h-4" />
-          </button>
+        <div className="relative z-10 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-sage block">
+              {t.navInventory} · {settings.cafeName}
+            </span>
+            <h2 className="text-[24px] font-black text-charcoal leading-tight">
+              {inventory.length} <span className="text-sm font-bold text-sage">{settings.language === 'ar' ? 'صنف مسجل' : 'articles'}</span>
+            </h2>
+            <p className="text-xs text-sage font-bold mt-0.5">
+              {inventory.filter((i) => i.quantity <= i.minThreshold).length} {t.stockLow}
+            </p>
+          </div>
 
-          <button
-            onClick={openAddModal}
-            className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-cafe-700 to-jazz-gold text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-cafe-900/10 active:scale-95 transition"
-          >
-            <Plus className="w-4 h-4" />
-            <span>{t.addItem}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="w-12 h-12 rounded-full bg-white border border-sage text-charcoal flex items-center justify-center shadow-sm active:scale-95 transition"
+              title="سجل الحركات"
+            >
+              <History className="w-5 h-5 text-sage" />
+            </button>
+            <button
+              onClick={openAddModal}
+              className="w-12 h-12 rounded-full bg-brandRed flex items-center justify-center text-white shadow-fab active:scale-95 transition"
+              title={t.addItem}
+            >
+              <Plus className="w-6 h-6 stroke-[2.5]" />
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Search & Low Stock Toggle */}
       <div className="space-y-2">
         <div className="relative">
-          <Search className="w-4 h-4 text-cafe-400 absolute start-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-sage absolute start-4 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t.searchInventory}
-            className="w-full ps-9 pe-4 py-2.5 rounded-2xl bg-white dark:bg-jazz-surface border border-cafe-200 dark:border-jazz-border text-xs text-cafe-900 dark:text-stone-100 placeholder-cafe-400 focus:outline-none focus:ring-2 focus:ring-jazz-gold/50 shadow-sm"
+            className="w-full ps-10 pe-4 py-3 rounded-[24px] bg-white border border-sage/30 text-xs text-charcoal placeholder-sage font-semibold focus:outline-none focus:border-charcoal shadow-sm"
           />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery('')}
-              className="absolute end-3 top-1/2 -translate-y-1/2 text-cafe-400 hover:text-cafe-600"
+              className="absolute end-4 top-1/2 -translate-y-1/2 text-sage hover:text-charcoal"
             >
               <X className="w-4 h-4" />
             </button>
@@ -238,33 +230,33 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         </div>
 
         {/* Low Stock Toggle Pill */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between px-1">
           <button
             onClick={() => setOnlyLowStock(!onlyLowStock)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition ${
+            className={`h-9 px-4 rounded-full text-xs font-black flex items-center gap-1.5 transition ${
               onlyLowStock
-                ? 'bg-rose-600 text-white shadow-sm ring-2 ring-rose-500/20'
-                : 'bg-white dark:bg-jazz-surface text-cafe-700 dark:text-stone-300 border border-cafe-200 dark:border-jazz-border'
+                ? 'bg-brandRed text-white shadow-sm'
+                : 'bg-white text-charcoal border border-sage/30 hover:border-sage'
             }`}
           >
             <AlertTriangle className="w-3.5 h-3.5" />
             <span>{t.lowStockFilter}</span>
           </button>
 
-          <span className="text-[11px] text-cafe-500 dark:text-stone-400 font-medium">
-            {filteredInventory.length} {settings.language === 'ar' ? 'عنصر معروض' : 'affichés'}
+          <span className="text-[11px] text-sage font-bold">
+            {filteredInventory.length} {settings.language === 'ar' ? 'معروض' : 'affichés'}
           </span>
         </div>
       </div>
 
       {/* Category Chips */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none px-1">
         <button
           onClick={() => setCategoryFilter('all')}
-          className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+          className={`h-9 px-3.5 rounded-full text-[11px] font-bold whitespace-nowrap transition ${
             categoryFilter === 'all'
-              ? 'bg-cafe-900 text-white dark:bg-jazz-gold dark:text-cafe-950'
-              : 'bg-white dark:bg-jazz-surface text-cafe-700 dark:text-stone-400 border border-cafe-200 dark:border-jazz-border'
+              ? 'bg-brandRed text-white shadow-sm'
+              : 'bg-white text-charcoal border border-sage/30'
           }`}
         >
           {t.filterAll}
@@ -276,10 +268,10 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1 transition ${
+              className={`h-9 px-3 rounded-full text-[11px] font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
                 isSelected
-                  ? 'bg-cafe-900 text-white dark:bg-jazz-gold dark:text-cafe-950'
-                  : 'bg-white dark:bg-jazz-surface text-cafe-700 dark:text-stone-400 border border-cafe-200 dark:border-jazz-border'
+                  ? 'bg-brandRed text-white shadow-sm'
+                  : 'bg-white text-charcoal border border-sage/30'
               }`}
             >
               <span>{meta.label}</span>
@@ -288,35 +280,35 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         })}
       </div>
 
-      {/* Inventory Logs Drawer (if toggled) */}
+      {/* Logs Drawer (if toggled) */}
       {showHistory && (
-        <div className="p-4 rounded-3xl bg-white dark:bg-jazz-surface border border-cafe-200 dark:border-jazz-border shadow-sm space-y-3">
-          <div className="flex items-center justify-between border-b border-cafe-100 dark:border-jazz-border pb-2">
-            <h3 className="font-extrabold text-xs text-cafe-900 dark:text-jazz-crema flex items-center gap-1.5">
-              <History className="w-4 h-4 text-jazz-gold" />
+        <div className="p-5 rounded-[32px] bg-white border border-sage/30 shadow-card space-y-3">
+          <div className="flex items-center justify-between border-b border-sage/20 pb-2.5">
+            <h4 className="font-black text-sm text-charcoal flex items-center gap-1.5">
+              <History className="w-4 h-4 text-brandRed" />
               <span>{t.recentActivity}</span>
-            </h3>
-            <button onClick={() => setShowHistory(false)} className="text-cafe-400 hover:text-cafe-600">
+            </h4>
+            <button onClick={() => setShowHistory(false)} className="text-sage hover:text-charcoal">
               <X className="w-4 h-4" />
             </button>
           </div>
           {logs.length === 0 ? (
-            <p className="text-xs text-cafe-500 py-3 text-center">لا توجد حركات مسجلة بعد</p>
+            <p className="text-xs text-sage py-3 text-center">لا توجد حركات مسجلة بعد</p>
           ) : (
             <div className="space-y-2 max-h-48 overflow-y-auto text-xs">
               {logs.slice(0, 10).map((log) => (
-                <div key={log.id} className="flex items-center justify-between py-1 border-b border-cafe-50 dark:border-jazz-border/40">
+                <div key={log.id} className="flex items-center justify-between py-1.5 border-b border-sage/10">
                   <div className="flex items-center gap-2">
-                    <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${
-                      log.type === 'in' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white ${
+                      log.type === 'in' ? 'bg-charcoal' : 'bg-brandRed'
                     }`}>
                       {log.type === 'in' ? '+' : '-'}
                     </span>
-                    <span className="font-bold text-cafe-800 dark:text-stone-200 truncate max-w-[140px]">{log.itemName}</span>
+                    <span className="font-extrabold text-charcoal truncate max-w-[140px]">{log.itemName}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-black text-cafe-900 dark:text-jazz-amber">{log.amount} {log.unit}</span>
-                    <span className="text-[10px] text-cafe-400">{log.date.slice(0, 10)}</span>
+                    <span className="font-black text-charcoal">{log.amount} {log.unit}</span>
+                    <span className="text-[10px] text-sage">{log.date.slice(0, 10)}</span>
                   </div>
                 </div>
               ))}
@@ -325,13 +317,13 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         </div>
       )}
 
-      {/* Item Cards List */}
+      {/* Feed Cards: 24px radius cards */}
       {filteredInventory.length === 0 ? (
-        <div className="p-8 text-center bg-white dark:bg-jazz-surface rounded-3xl border border-cafe-200 dark:border-jazz-border">
-          <div className="w-12 h-12 rounded-full bg-cafe-100 dark:bg-jazz-card text-cafe-400 mx-auto flex items-center justify-center mb-3">
+        <div className="p-8 text-center bg-white rounded-[40px] border border-sage/30 shadow-card">
+          <div className="w-14 h-14 rounded-2xl bg-sage/20 text-charcoal mx-auto flex items-center justify-center mb-3">
             <Package className="w-6 h-6" />
           </div>
-          <p className="text-xs font-bold text-cafe-600 dark:text-stone-400">
+          <p className="text-xs font-black text-charcoal">
             {t.noItemsFound}
           </p>
         </div>
@@ -341,101 +333,88 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
             const meta = getCategoryMeta(item.category);
             const Icon = meta.icon;
             const isLow = item.quantity <= item.minThreshold;
-            const percentage = Math.min(100, Math.round((item.quantity / Math.max(item.minThreshold * 2, 1)) * 100));
 
             return (
               <div
                 key={item.id}
-                className={`p-4 rounded-3xl bg-white dark:bg-jazz-surface border transition-all duration-200 shadow-sm ${
-                  isLow
-                    ? 'border-rose-300 dark:border-rose-900/60 ring-1 ring-rose-500/20'
-                    : 'border-cafe-200 dark:border-jazz-border hover:border-jazz-gold/40'
-                }`}
+                className="p-4 rounded-[24px] bg-white border border-sage/30 shadow-card flex flex-col gap-3 hover:border-sage transition"
               >
-                {/* Top Row: Category icon, Name, Quantity */}
+                {/* 56px Icon Container, Heading, Quantity */}
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border ${meta.color}`}>
-                      <Icon className="w-5 h-5" />
+                  <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
+                      isLow ? 'bg-brandRed/10 text-brandRed' : 'bg-charcoal/10 text-charcoal'
+                    }`}>
+                      <Icon className="w-6 h-6 stroke-[2]" />
                     </div>
+
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[11px] font-bold text-cafe-500 dark:text-stone-400">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-sage">
                           {meta.label}
                         </span>
                         {isLow ? (
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center gap-1 animate-pulse">
-                            <AlertTriangle className="w-3 h-3" />
-                            <span>{t.stockLow}</span>
+                          <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-brandRed text-white animate-pulse">
+                            {t.stockLow}
                           </span>
                         ) : (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-sage/20 text-charcoal">
                             {t.stockHealthy}
                           </span>
                         )}
                       </div>
-                      <h3 className="font-bold text-sm text-cafe-900 dark:text-stone-100 mt-0.5 truncate">
+
+                      {/* 18px bold heading */}
+                      <h4 className="text-[17px] font-extrabold text-charcoal truncate mt-0.5">
                         {item.name}
-                      </h3>
+                      </h4>
+
+                      <div className="text-[11px] font-medium text-sage mt-0.5">
+                        الحد الأدنى: <strong>{item.minThreshold} {item.unit}</strong>
+                      </div>
                     </div>
                   </div>
 
                   {/* Quantity Display */}
                   <div className="text-end shrink-0">
-                    <div className={`text-xl font-black ${isLow ? 'text-rose-600 dark:text-rose-400' : 'text-cafe-900 dark:text-jazz-crema'}`}>
+                    <div className={`text-xl font-black ${isLow ? 'text-brandRed' : 'text-charcoal'}`}>
                       {item.quantity}
                     </div>
-                    <div className="text-[11px] font-extrabold text-cafe-500 dark:text-jazz-amber">
+                    <div className="text-[11px] font-extrabold text-sage">
                       {item.unit}
                     </div>
                   </div>
                 </div>
 
-                {/* Threshold Progress Bar */}
-                <div className="mt-3">
-                  <div className="flex items-center justify-between text-[11px] font-medium text-cafe-500 dark:text-stone-400 mb-1">
-                    <span>الحد الأدنى: <strong>{item.minThreshold} {item.unit}</strong></span>
-                    <span>{t.lastRestockedDate} {item.lastRestocked}</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-cafe-100 dark:bg-jazz-card overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-300 ${
-                        isLow ? 'bg-rose-500' : 'bg-gradient-to-r from-cafe-500 to-emerald-500'
-                      }`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Bottom Actions: Stepper and Custom Adjust */}
-                <div className="mt-3.5 pt-3 border-t border-cafe-100 dark:border-jazz-border/70 flex items-center justify-between gap-2">
+                {/* Bottom Controls: Stepper, Quick Adjust & Actions */}
+                <div className="pt-2 border-t border-sage/20 flex items-center justify-between gap-2">
                   
-                  {/* Stepper buttons */}
-                  <div className="flex items-center gap-1 bg-cafe-100/70 dark:bg-jazz-card p-1 rounded-2xl border border-cafe-200 dark:border-jazz-border">
+                  {/* Stepper */}
+                  <div className="flex items-center gap-1 bg-offwhite p-1 rounded-full border border-sage/30">
                     <button
                       onClick={() => adjustStock(item.id, -1, 'استهلاك يدوي (-1)')}
-                      className="w-7 h-7 rounded-xl bg-white dark:bg-jazz-surface flex items-center justify-center text-cafe-700 dark:text-stone-200 hover:bg-rose-500 hover:text-white transition active:scale-90"
+                      className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-charcoal hover:bg-brandRed hover:text-white transition active:scale-90"
                       title="خصم 1"
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <span className="px-2 text-xs font-black text-cafe-800 dark:text-stone-200 min-w-[28px] text-center">
+                    <span className="px-2 text-xs font-black text-charcoal min-w-[28px] text-center">
                       {item.quantity}
                     </span>
                     <button
                       onClick={() => adjustStock(item.id, 1, 'توريد يدوي (+1)')}
-                      className="w-7 h-7 rounded-xl bg-white dark:bg-jazz-surface flex items-center justify-center text-cafe-700 dark:text-stone-200 hover:bg-emerald-500 hover:text-white transition active:scale-90"
+                      className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-charcoal hover:bg-charcoal hover:text-white transition active:scale-90"
                       title="إضافة 1"
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
-                  {/* Stock In / Out custom modals buttons */}
+                  {/* Quick in/out + Edit/Delete */}
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => openAdjustModal(item, 'in')}
-                      className="px-2.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 text-xs font-bold flex items-center gap-1 active:scale-95 transition"
+                      className="px-3 py-1.5 rounded-full bg-charcoal text-white text-xs font-black flex items-center gap-1 active:scale-95 transition"
                     >
                       <TrendingUp className="w-3.5 h-3.5" />
                       <span>{t.quickStockIn}</span>
@@ -443,7 +422,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
                     <button
                       onClick={() => openAdjustModal(item, 'out')}
-                      className="px-2.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 text-xs font-bold flex items-center gap-1 active:scale-95 transition"
+                      className="px-3 py-1.5 rounded-full bg-brandRed text-white text-xs font-black flex items-center gap-1 active:scale-95 transition"
                     >
                       <TrendingDown className="w-3.5 h-3.5" />
                       <span>{t.quickStockOut}</span>
@@ -451,7 +430,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 
                     <button
                       onClick={() => openEditModal(item)}
-                      className="p-1.5 rounded-xl hover:bg-cafe-100 dark:hover:bg-jazz-card text-cafe-500 dark:text-stone-400 transition"
+                      className="p-1.5 text-sage hover:text-charcoal"
                       title={t.editItem}
                     >
                       <Edit2 className="w-4 h-4" />
@@ -463,7 +442,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                           deleteInventoryItem(item.id);
                         }
                       }}
-                      className="p-1.5 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-950/50 text-rose-500 transition"
+                      className="p-1.5 text-sage hover:text-brandRed"
                       title={t.delete}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -478,28 +457,26 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         </div>
       )}
 
-      {/* Add / Edit Item Modal */}
+      {/* Add / Edit Modal (40px radius) */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg bg-white dark:bg-jazz-surface rounded-3xl border border-cafe-200 dark:border-jazz-border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white rounded-[40px] border border-sage/30 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             
-            <div className="px-5 py-4 border-b border-cafe-200 dark:border-jazz-border flex items-center justify-between">
-              <h2 className="text-base font-extrabold text-cafe-900 dark:text-jazz-crema">
+            <div className="px-6 py-5 border-b border-sage/20 flex items-center justify-between">
+              <h3 className="text-[20px] font-black text-charcoal">
                 {editingItem ? t.editItem : t.addItem}
-              </h2>
+              </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-1.5 rounded-xl text-cafe-400 hover:text-cafe-700 dark:hover:text-stone-200"
+                className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center text-charcoal hover:bg-brandRed hover:text-white transition"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveItem} className="p-5 overflow-y-auto space-y-4 text-xs">
-              
-              {/* Name */}
+            <form onSubmit={handleSaveItem} className="p-6 overflow-y-auto space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-cafe-800 dark:text-stone-200 mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-sage mb-1">
                   {t.itemName} *
                 </label>
                 <input
@@ -507,14 +484,13 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                   required
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="مثال: حبوب قهوة كولومبية"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-cafe-50 dark:bg-jazz-card border border-cafe-300 dark:border-jazz-border text-xs text-cafe-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-jazz-gold/50"
+                  placeholder="مثال: حبوب بن كولومبي"
+                  className="w-full px-4 py-3 rounded-2xl bg-offwhite border border-sage/30 text-xs text-charcoal font-bold focus:outline-none focus:border-charcoal"
                 />
               </div>
 
-              {/* Category */}
               <div>
-                <label className="block font-bold text-cafe-800 dark:text-stone-200 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-sage mb-1.5">
                   {t.itemCategory}
                 </label>
                 <div className="grid grid-cols-4 gap-2">
@@ -527,10 +503,10 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                         type="button"
                         key={cat}
                         onClick={() => setFormCategory(cat)}
-                        className={`p-2 rounded-xl border flex flex-col items-center gap-1 text-[11px] font-bold transition ${
+                        className={`p-2 rounded-2xl border flex flex-col items-center gap-1 text-[10px] font-black transition ${
                           isSelected
-                            ? 'bg-cafe-900 text-white dark:bg-jazz-gold dark:text-cafe-950 border-transparent shadow-sm'
-                            : 'bg-cafe-50 dark:bg-jazz-card text-cafe-700 dark:text-stone-300 border-cafe-200 dark:border-jazz-border'
+                            ? 'bg-charcoal text-white border-charcoal shadow-sm'
+                            : 'bg-offwhite text-charcoal border-sage/30'
                         }`}
                       >
                         <Icon className="w-4 h-4" />
@@ -541,10 +517,9 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                 </div>
               </div>
 
-              {/* Quantity & Unit */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-cafe-800 dark:text-stone-200 mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-sage mb-1">
                     {t.itemQuantity} *
                   </label>
                   <input
@@ -555,18 +530,18 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                     value={formQuantity}
                     onChange={(e) => setFormQuantity(e.target.value === '' ? '' : Number(e.target.value))}
                     placeholder="0"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-cafe-50 dark:bg-jazz-card border border-cafe-300 dark:border-jazz-border text-xs text-cafe-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-jazz-gold/50 font-bold"
+                    className="w-full px-4 py-3 rounded-2xl bg-offwhite border border-sage/30 text-sm font-black text-charcoal focus:outline-none focus:border-charcoal"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-cafe-800 dark:text-stone-200 mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-sage mb-1">
                     {t.itemUnit}
                   </label>
                   <select
                     value={formUnit}
                     onChange={(e) => setFormUnit(e.target.value as InventoryUnit)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-cafe-50 dark:bg-jazz-card border border-cafe-300 dark:border-jazz-border text-xs text-cafe-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-jazz-gold/50 font-bold"
+                    className="w-full px-3 py-3 rounded-2xl bg-offwhite border border-sage/30 text-xs font-bold text-charcoal focus:outline-none focus:border-charcoal"
                   >
                     {units.map((u) => (
                       <option key={u} value={u}>{u}</option>
@@ -575,9 +550,8 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                 </div>
               </div>
 
-              {/* Minimum Alert Threshold */}
               <div>
-                <label className="block font-bold text-cafe-800 dark:text-stone-200 mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-sage mb-1">
                   {t.itemMinThreshold} ({formUnit}) *
                 </label>
                 <input
@@ -587,17 +561,13 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                   required
                   value={formMinThreshold}
                   onChange={(e) => setFormMinThreshold(e.target.value === '' ? '' : Number(e.target.value))}
-                  placeholder="الحد الذي يبدأ عنده التنبيه"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-cafe-50 dark:bg-jazz-card border border-cafe-300 dark:border-jazz-border text-xs text-cafe-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-jazz-gold/50 font-bold text-rose-600 dark:text-rose-400"
+                  placeholder="5"
+                  className="w-full px-4 py-3 rounded-2xl bg-offwhite border border-sage/30 text-xs font-bold text-brandRed focus:outline-none focus:border-charcoal"
                 />
-                <p className="text-[11px] text-cafe-500 dark:text-stone-400 mt-1">
-                  {t.itemMinThresholdHelp}
-                </p>
               </div>
 
-              {/* Cost per unit */}
               <div>
-                <label className="block font-bold text-cafe-800 dark:text-stone-200 mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-sage mb-1">
                   {t.itemCostPerUnit} ({settings.currency})
                 </label>
                 <input
@@ -607,76 +577,60 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                   value={formCostPerUnit}
                   onChange={(e) => setFormCostPerUnit(e.target.value === '' ? '' : Number(e.target.value))}
                   placeholder="0.00"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-cafe-50 dark:bg-jazz-card border border-cafe-300 dark:border-jazz-border text-xs text-cafe-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-jazz-gold/50"
+                  className="w-full px-4 py-3 rounded-2xl bg-offwhite border border-sage/30 text-xs font-bold text-charcoal focus:outline-none focus:border-charcoal"
                 />
               </div>
 
-              {/* Notes */}
-              <div>
-                <label className="block font-bold text-cafe-800 dark:text-stone-200 mb-1">
-                  ملاحظات
-                </label>
-                <textarea
-                  rows={2}
-                  value={formNotes}
-                  onChange={(e) => setFormNotes(e.target.value)}
-                  placeholder="ملاحظات حول المورد أو رقم الدفعة..."
-                  className="w-full px-3.5 py-2 rounded-xl bg-cafe-50 dark:bg-jazz-card border border-cafe-300 dark:border-jazz-border text-xs text-cafe-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-jazz-gold/50"
-                />
-              </div>
-
-              {/* Buttons */}
-              <div className="pt-3 border-t border-cafe-200 dark:border-jazz-border flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-sage/20 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-cafe-300 dark:border-jazz-border text-cafe-700 dark:text-stone-300 font-bold hover:bg-cafe-100 dark:hover:bg-jazz-card transition"
+                  className="px-5 py-2.5 rounded-full bg-white border border-sage text-charcoal font-extrabold hover:bg-offwhite transition"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-cafe-700 to-jazz-gold text-white font-bold shadow-md active:scale-95 transition"
+                  className="px-6 py-2.5 rounded-full bg-brandRed hover:bg-brandRed-hover text-white font-extrabold shadow-fab active:scale-95 transition"
                 >
                   {t.save}
                 </button>
               </div>
-
             </form>
 
           </div>
         </div>
       )}
 
-      {/* Quick Adjust Modal (Stock IN / OUT) */}
+      {/* Adjust Modal */}
       {adjustingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-white dark:bg-jazz-surface rounded-3xl border border-cafe-200 dark:border-jazz-border shadow-2xl overflow-hidden p-5 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-white rounded-[40px] border border-sage/30 shadow-2xl overflow-hidden p-6 space-y-4">
             
-            <div className="flex items-center justify-between border-b border-cafe-100 dark:border-jazz-border pb-3">
+            <div className="flex items-center justify-between border-b border-sage/20 pb-3">
               <div className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                  adjustType === 'in' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
+                  adjustType === 'in' ? 'bg-charcoal text-white' : 'bg-brandRed text-white'
                 }`}>
-                  {adjustType === 'in' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                  {adjustType === 'in' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm text-cafe-900 dark:text-jazz-crema">
+                  <h4 className="font-black text-sm text-charcoal">
                     {adjustType === 'in' ? t.stockInTitle : t.stockOutTitle}
-                  </h3>
-                  <p className="text-[11px] text-cafe-500 dark:text-stone-400 truncate max-w-[180px]">
+                  </h4>
+                  <p className="text-[11px] text-sage font-bold truncate max-w-[160px]">
                     {adjustingItem.name}
                   </p>
                 </div>
               </div>
-              <button onClick={() => setAdjustingItem(null)} className="text-cafe-400 hover:text-cafe-600">
-                <X className="w-5 h-5" />
+              <button onClick={() => setAdjustingItem(null)} className="text-sage hover:text-charcoal">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleConfirmAdjust} className="space-y-3 text-xs">
+            <form onSubmit={handleConfirmAdjust} className="space-y-3.5 text-xs">
               <div>
-                <label className="block font-bold text-cafe-800 dark:text-stone-200 mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-sage mb-1">
                   {t.adjustQuantity} ({adjustingItem.unit}) *
                 </label>
                 <input
@@ -687,21 +641,21 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                   autoFocus
                   value={adjustAmount}
                   onChange={(e) => setAdjustAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                  placeholder="أدخل الكمية..."
-                  className="w-full px-3.5 py-3 rounded-xl bg-cafe-50 dark:bg-jazz-card border border-cafe-300 dark:border-jazz-border text-base text-cafe-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-jazz-gold font-black text-center"
+                  placeholder="0.00"
+                  className="w-full px-4 py-3 rounded-2xl bg-offwhite border border-sage/30 text-lg text-charcoal focus:outline-none focus:border-charcoal font-black text-center"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-cafe-800 dark:text-stone-200 mb-1">
-                  ملاحظة الحركة (اختياري)
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-sage mb-1">
+                  ملاحظة الحركة
                 </label>
                 <input
                   type="text"
                   value={adjustNote}
                   onChange={(e) => setAdjustNote(e.target.value)}
-                  placeholder={adjustType === 'in' ? 'مثال: شراء كيس بن جديد' : 'مثال: استهلاك نوبة الصباح'}
-                  className="w-full px-3 py-2 rounded-xl bg-cafe-50 dark:bg-jazz-card border border-cafe-300 dark:border-jazz-border text-xs text-cafe-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-jazz-gold/50"
+                  placeholder="مثال: توريد شحنة جديدة"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-offwhite border border-sage/30 text-xs text-charcoal focus:outline-none focus:border-charcoal font-semibold"
                 />
               </div>
 
@@ -709,16 +663,16 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setAdjustingItem(null)}
-                  className="px-4 py-2 rounded-xl border border-cafe-300 dark:border-jazz-border text-cafe-700 dark:text-stone-300 font-bold"
+                  className="px-5 py-2.5 rounded-full border border-sage text-charcoal font-bold"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className={`px-5 py-2 rounded-xl text-white font-bold shadow-md active:scale-95 transition ${
+                  className={`px-6 py-2.5 rounded-full text-white font-black shadow-md active:scale-95 transition ${
                     adjustType === 'in'
-                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-500'
-                      : 'bg-gradient-to-r from-rose-600 to-rose-500'
+                      ? 'bg-charcoal hover:bg-black'
+                      : 'bg-brandRed hover:bg-brandRed-hover'
                   }`}
                 >
                   {t.confirm}
