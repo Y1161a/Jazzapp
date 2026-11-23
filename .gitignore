@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# GSD Session State
+.gsd/STATE.md
+.gsd/JOURNAL.md
+.gsd/TODO.md
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated
+Thumbs.db
+.DS_Store
