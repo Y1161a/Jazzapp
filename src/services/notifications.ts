@@ -73,6 +73,8 @@ class NotificationService {
   sendNotification(title: string, body: string, tag?: string): void {
     this.playJazzChime();
 
+    const iconUrl = `${import.meta.env.BASE_URL}icons/coffee-icon.svg`;
+
     if ('Notification' in window && Notification.permission === 'granted') {
       if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
@@ -80,13 +82,13 @@ class NotificationService {
           title,
           body,
           tag: tag || 'jazzapp-alert',
-          icon: '/icons/coffee-icon.svg'
+          icon: iconUrl
         });
       } else {
         new Notification(title, {
           body,
-          icon: '/icons/coffee-icon.svg',
-          badge: '/icons/coffee-icon.svg',
+          icon: iconUrl,
+          badge: iconUrl,
           tag: tag || 'jazzapp-alert',
         });
       }

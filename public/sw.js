@@ -1,16 +1,20 @@
 // Jazzapp Service Worker
-const CACHE_NAME = 'jazzapp-cache-v1';
+const basePath = self.location.pathname.substring(0, self.location.pathname.lastIndexOf('/') + 1);
+const CACHE_NAME = 'jazzapp-cache-v2';
+
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/coffee-icon.svg'
+  basePath,
+  basePath + 'index.html',
+  basePath + 'manifest.json',
+  basePath + 'icons/coffee-icon.svg'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
+        console.warn('Failed to cache all initial assets:', err);
+      });
     }).then(() => self.skipWaiting())
   );
 });
@@ -30,7 +34,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Stale-while-revalidate strategy for same-origin requests
   if (event.request.method === 'GET' && event.request.url.startsWith(self.location.origin)) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
@@ -52,15 +55,14 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Listen for reminder notifications trigger from the client
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SCHEDULE_NOTIFICATION') {
     const { title, body, tag, icon } = event.data;
     if (Notification.permission === 'granted') {
       self.registration.showNotification(title, {
         body,
-        icon: icon || '/icons/coffee-icon.svg',
-        badge: '/icons/coffee-icon.svg',
+        icon: icon || (basePath + 'icons/coffee-icon.svg'),
+        badge: basePath + 'icons/coffee-icon.svg',
         tag: tag || 'bill-reminder',
         vibrate: [200, 100, 200],
         requireInteraction: true
@@ -76,7 +78,7 @@ self.addEventListener('notificationclick', (event) => {
       if (clientList.length > 0) {
         return clientList[0].focus();
       }
-      return clients.openWindow('/');
+      return clients.openWindow(basePath);
     })
   );
 });

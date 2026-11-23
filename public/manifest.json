@@ -2,14 +2,15 @@
   "name": "Jazzapp — إدارة المقهى",
   "short_name": "Jazzapp",
   "description": "تطبيق إدارة التزامات وفواتير ومخزون المقهى - المنشئ ياسين وشتاتي",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#131110",
-  "theme_color": "#131110",
+  "background_color": "#171e19",
+  "theme_color": "#171e19",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icons/coffee-icon.svg",
+      "src": "./icons/coffee-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
