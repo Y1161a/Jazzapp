@@ -1,10 +1,12 @@
-import { Obligation, InventoryItem, InventoryLog, UserSettings } from '../types';
+import { Obligation, InventoryItem, InventoryLog, UserSettings, BreakEvenConfig, DailyRecord } from '../types';
 
 const STORAGE_KEYS = {
   OBLIGATIONS: 'jazzapp_obligations_v1',
   INVENTORY: 'jazzapp_inventory_v1',
   LOGS: 'jazzapp_inventory_logs_v1',
   SETTINGS: 'jazzapp_settings_v1',
+  BREAK_EVEN: 'jazzapp_breakeven_v1',
+  DAILY_RECORDS: 'jazzapp_daily_records_v1',
 };
 
 export const defaultSettings: UserSettings = {
@@ -227,10 +229,76 @@ export function saveStoredSettings(settings: UserSettings): void {
   localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
 }
 
+export const defaultBreakEvenConfig: BreakEvenConfig = {
+  useAutoObligations: true,
+  customMonthlyExpenses: 3000,
+  avgDrinkPrice: 2.5,
+  avgDrinkCost: 0.65,
+  workingDaysPerMonth: 30,
+};
+
+const todayIso = new Date().toISOString().split('T')[0];
+const yesterdayIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+export const initialDailyRecords: DailyRecord[] = [
+  {
+    id: 'daily-1',
+    date: yesterdayIso,
+    revenue: 380,
+    expenses: 65,
+    drinksSold: 140,
+    notes: 'مبيعات جيدة ومشتريات نعناع وسكر طارئة',
+    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'daily-2',
+    date: todayIso,
+    revenue: 260,
+    expenses: 40,
+    drinksSold: 95,
+    notes: 'صندوق اليوم حتى الآن',
+    createdAt: new Date().toISOString(),
+  }
+];
+
+export function getStoredBreakEvenConfig(): BreakEvenConfig {
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.BREAK_EVEN);
+    if (!data) {
+      saveStoredBreakEvenConfig(defaultBreakEvenConfig);
+      return defaultBreakEvenConfig;
+    }
+    return { ...defaultBreakEvenConfig, ...JSON.parse(data) };
+  } catch {
+    return defaultBreakEvenConfig;
+  }
+}
+
+export function saveStoredBreakEvenConfig(config: BreakEvenConfig): void {
+  localStorage.setItem(STORAGE_KEYS.BREAK_EVEN, JSON.stringify(config));
+}
+
+export function getStoredDailyRecords(): DailyRecord[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.DAILY_RECORDS);
+    if (!data) {
+      saveStoredDailyRecords(initialDailyRecords);
+      return initialDailyRecords;
+    }
+    return JSON.parse(data);
+  } catch {
+    return initialDailyRecords;
+  }
+}
+
+export function saveStoredDailyRecords(records: DailyRecord[]): void {
+  localStorage.setItem(STORAGE_KEYS.DAILY_RECORDS, JSON.stringify(records));
+}
+
 // Backup & Restore
 export function exportAllData(): string {
   const backup = {
-    version: '1.0',
+    version: '1.1',
     exportDate: new Date().toISOString(),
     author: 'ياسين وشتاتي',
     appName: 'Jazzapp',
@@ -238,6 +306,8 @@ export function exportAllData(): string {
     inventory: getStoredInventory(),
     logs: getStoredLogs(),
     settings: getStoredSettings(),
+    breakEvenConfig: getStoredBreakEvenConfig(),
+    dailyRecords: getStoredDailyRecords(),
   };
   return JSON.stringify(backup, null, 2);
 }
@@ -245,11 +315,13 @@ export function exportAllData(): string {
 export function importAllData(jsonString: string): boolean {
   try {
     const parsed = JSON.parse(jsonString);
-    if (parsed && parsed.obligations && parsed.inventory) {
-      saveStoredObligations(parsed.obligations);
-      saveStoredInventory(parsed.inventory);
+    if (parsed && (parsed.obligations || parsed.inventory)) {
+      if (parsed.obligations) saveStoredObligations(parsed.obligations);
+      if (parsed.inventory) saveStoredInventory(parsed.inventory);
       if (parsed.logs) saveStoredLogs(parsed.logs);
       if (parsed.settings) saveStoredSettings(parsed.settings);
+      if (parsed.breakEvenConfig) saveStoredBreakEvenConfig(parsed.breakEvenConfig);
+      if (parsed.dailyRecords) saveStoredDailyRecords(parsed.dailyRecords);
       return true;
     }
     return false;
@@ -264,4 +336,6 @@ export function resetToDefaults(): void {
   saveStoredInventory(initialInventory);
   saveStoredLogs(initialLogs);
   saveStoredSettings(defaultSettings);
+  saveStoredBreakEvenConfig(defaultBreakEvenConfig);
+  saveStoredDailyRecords(initialDailyRecords);
 }

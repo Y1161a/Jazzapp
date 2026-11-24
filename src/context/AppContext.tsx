@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { Obligation, InventoryItem, InventoryLog, UserSettings, TabType } from '../types';
+import { Obligation, InventoryItem, InventoryLog, UserSettings, TabType, BreakEvenConfig, DailyRecord } from '../types';
 import { 
   getStoredObligations, 
   saveStoredObligations, 
@@ -9,6 +9,10 @@ import {
   saveStoredLogs, 
   getStoredSettings, 
   saveStoredSettings,
+  getStoredBreakEvenConfig,
+  saveStoredBreakEvenConfig,
+  getStoredDailyRecords,
+  saveStoredDailyRecords,
   exportAllData,
   importAllData,
   resetToDefaults
@@ -44,6 +48,32 @@ interface AppContextType {
   // Logs
   logs: InventoryLog[];
 
+  // Break-Even Calculator
+  breakEvenConfig: BreakEvenConfig;
+  updateBreakEvenConfig: (config: Partial<BreakEvenConfig>) => void;
+  breakEvenMetrics: {
+    effectiveMonthlyExpenses: number;
+    contributionMargin: number;
+    breakEvenDrinksMonthly: number;
+    breakEvenDrinksDaily: number;
+    breakEvenRevenueMonthly: number;
+    breakEvenRevenueDaily: number;
+    todayDrinksSold: number;
+    todayDrinksPercent: number;
+  };
+
+  // Daily Records
+  dailyRecords: DailyRecord[];
+  addDailyRecord: (record: Omit<DailyRecord, 'id' | 'createdAt'>) => void;
+  updateDailyRecord: (record: DailyRecord) => void;
+  deleteDailyRecord: (id: string) => void;
+  todayRecord?: DailyRecord;
+  monthSummary: {
+    revenue: number;
+    expenses: number;
+    net: number;
+  };
+
   // Stats
   stats: {
     totalPending: number;
@@ -67,6 +97,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [obligations, setObligations] = useState<Obligation[]>(getStoredObligations);
   const [inventory, setInventory] = useState<InventoryItem[]>(getStoredInventory);
   const [logs, setLogs] = useState<InventoryLog[]>(getStoredLogs);
+  const [breakEvenConfig, setBreakEvenConfig] = useState<BreakEvenConfig>(getStoredBreakEvenConfig);
+  const [dailyRecords, setDailyRecords] = useState<DailyRecord[]>(getStoredDailyRecords);
 
   // Sync settings
   const language = settings.language;
@@ -121,6 +153,102 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const toggleTheme = useCallback(() => {
     updateSettings({ theme: theme === 'dark' ? 'light' : 'dark' });
   }, [theme, updateSettings]);
+
+  // Break-even config operations
+  const updateBreakEvenConfig = useCallback((newConfig: Partial<BreakEvenConfig>) => {
+    setBreakEvenConfig((prev) => {
+      const updated = { ...prev, ...newConfig };
+      saveStoredBreakEvenConfig(updated);
+      return updated;
+    });
+  }, []);
+
+  // Daily records operations
+  const addDailyRecord = useCallback((record: Omit<DailyRecord, 'id' | 'createdAt'>) => {
+    const newRecord: DailyRecord = {
+      ...record,
+      id: `daily-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setDailyRecords((prev) => {
+      const filtered = prev.filter((r) => r.date !== newRecord.date);
+      const updated = [newRecord, ...filtered].sort((a, b) => b.date.localeCompare(a.date));
+      saveStoredDailyRecords(updated);
+      return updated;
+    });
+  }, []);
+
+  const updateDailyRecord = useCallback((record: DailyRecord) => {
+    setDailyRecords((prev) => {
+      const updated = prev.map((r) => (r.id === record.id ? record : r));
+      saveStoredDailyRecords(updated);
+      return updated;
+    });
+  }, []);
+
+  const deleteDailyRecord = useCallback((id: string) => {
+    setDailyRecords((prev) => {
+      const updated = prev.filter((r) => r.id !== id);
+      saveStoredDailyRecords(updated);
+      return updated;
+    });
+  }, []);
+
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayRecord = useMemo(() => dailyRecords.find((r) => r.date === todayStr), [dailyRecords, todayStr]);
+
+  const monthSummary = useMemo(() => {
+    const currentYearMonth = new Date().toISOString().slice(0, 7);
+    const currentMonthRecords = dailyRecords.filter((r) => r.date.startsWith(currentYearMonth));
+    const revenue = currentMonthRecords.reduce((acc, r) => acc + r.revenue, 0);
+    const expenses = currentMonthRecords.reduce((acc, r) => acc + r.expenses, 0);
+    return {
+      revenue,
+      expenses,
+      net: revenue - expenses,
+    };
+  }, [dailyRecords]);
+
+  const breakEvenMetrics = useMemo(() => {
+    let effectiveMonthlyExpenses = 0;
+    if (breakEvenConfig.useAutoObligations) {
+      effectiveMonthlyExpenses = obligations.reduce((acc, o) => acc + o.amount, 0);
+      if (effectiveMonthlyExpenses === 0) {
+        effectiveMonthlyExpenses = breakEvenConfig.customMonthlyExpenses;
+      }
+    } else {
+      effectiveMonthlyExpenses = breakEvenConfig.customMonthlyExpenses;
+    }
+
+    const price = breakEvenConfig.avgDrinkPrice > 0 ? breakEvenConfig.avgDrinkPrice : 2.5;
+    const cost = breakEvenConfig.avgDrinkCost >= 0 ? breakEvenConfig.avgDrinkCost : 0.65;
+    const margin = Math.max(0.1, price - cost);
+    const days = breakEvenConfig.workingDaysPerMonth > 0 ? breakEvenConfig.workingDaysPerMonth : 30;
+
+    const breakEvenDrinksMonthly = Math.ceil(effectiveMonthlyExpenses / margin);
+    const breakEvenDrinksDaily = Math.ceil(breakEvenDrinksMonthly / days);
+    const breakEvenRevenueMonthly = breakEvenDrinksMonthly * price;
+    const breakEvenRevenueDaily = breakEvenDrinksDaily * price;
+
+    const todayDrinksSold = todayRecord
+      ? (todayRecord.drinksSold || Math.round(todayRecord.revenue / price))
+      : 0;
+
+    const todayDrinksPercent = breakEvenDrinksDaily > 0 
+      ? Math.min(100, Math.round((todayDrinksSold / breakEvenDrinksDaily) * 100))
+      : 0;
+
+    return {
+      effectiveMonthlyExpenses,
+      contributionMargin: Number(margin.toFixed(3)),
+      breakEvenDrinksMonthly,
+      breakEvenDrinksDaily,
+      breakEvenRevenueMonthly,
+      breakEvenRevenueDaily,
+      todayDrinksSold,
+      todayDrinksPercent,
+    };
+  }, [obligations, breakEvenConfig, todayRecord]);
 
   // Obligations operations
   const addObligation = useCallback((item: Omit<Obligation, 'id' | 'createdAt' | 'reminderTriggered'>) => {
@@ -299,6 +427,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setInventory(getStoredInventory());
       setLogs(getStoredLogs());
       setSettings(getStoredSettings());
+      setBreakEvenConfig(getStoredBreakEvenConfig());
+      setDailyRecords(getStoredDailyRecords());
     }
     return success;
   }, []);
@@ -309,6 +439,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setInventory(getStoredInventory());
     setLogs(getStoredLogs());
     setSettings(getStoredSettings());
+    setBreakEvenConfig(getStoredBreakEvenConfig());
+    setDailyRecords(getStoredDailyRecords());
   }, []);
 
   const contextValue = useMemo(() => ({
@@ -332,6 +464,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     deleteInventoryItem,
     adjustStock,
     logs,
+    breakEvenConfig,
+    updateBreakEvenConfig,
+    breakEvenMetrics,
+    dailyRecords,
+    addDailyRecord,
+    updateDailyRecord,
+    deleteDailyRecord,
+    todayRecord,
+    monthSummary,
     stats,
     exportData,
     importData,
@@ -345,6 +486,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     obligations,
     inventory,
     logs,
+    breakEvenConfig,
+    breakEvenMetrics,
+    dailyRecords,
+    todayRecord,
+    monthSummary,
     stats,
     setLanguage,
     toggleTheme,
@@ -357,6 +503,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateInventoryItem,
     deleteInventoryItem,
     adjustStock,
+    updateBreakEvenConfig,
+    addDailyRecord,
+    updateDailyRecord,
+    deleteDailyRecord,
     exportData,
     importData,
     resetAll,

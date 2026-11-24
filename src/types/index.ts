@@ -68,4 +68,22 @@ export interface UserSettings {
   notificationsEnabled: boolean;
 }
 
-export type TabType = 'dashboard' | 'obligations' | 'inventory' | 'settings';
+export interface BreakEvenConfig {
+  useAutoObligations: boolean;
+  customMonthlyExpenses: number;
+  avgDrinkPrice: number;
+  avgDrinkCost: number;
+  workingDaysPerMonth: number;
+}
+
+export interface DailyRecord {
+  id: string;
+  date: string; // YYYY-MM-DD
+  revenue: number; // العائد المالي لليوم
+  expenses: number; // المصاريف اليومية
+  drinksSold?: number; // عدد المشروبات المباعة (اختياري)
+  notes?: string;
+  createdAt: string;
+}
+
+export type TabType = 'dashboard' | 'obligations' | 'inventory' | 'breakeven' | 'daily' | 'settings';
